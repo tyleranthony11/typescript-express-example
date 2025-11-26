@@ -1,13 +1,14 @@
-import express from 'express'
-import userRouter from './routers/user'
+import express from "express";
+//import userRouter from './routers/user'
+import bookRouter from "./routers/book";
 
-const PORT = process.env.PORT ?? 5001
+const PORT = process.env.PORT ?? 5001;
 
-const app = express()
+const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
-app.use('/api/user', userRouter)
+app.use("/api/book", bookRouter);
 
 /**
  * Exercise:
@@ -25,4 +26,6 @@ app.use('/api/user', userRouter)
  * operations assuming that makes sense in your case.
  */
 
-app.listen(PORT, () => { console.log(`Server running on port ${PORT}`) })
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
