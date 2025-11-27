@@ -1,5 +1,5 @@
 import express from "express";
-//import userRouter from './routers/user'
+import userRouter from "./routers/user";
 import bookRouter from "./routers/book";
 
 const PORT = process.env.PORT ?? 5001;
@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/book", bookRouter);
+app.use("/api/user", userRouter);
 
 /**
  * Exercise:
