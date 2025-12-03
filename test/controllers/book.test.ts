@@ -22,7 +22,6 @@ const mockResponse = () => {
  
 describe("createBook", () => {
   beforeEach(() => {
-    (BookController as any).DEMO_BOOKS.length = 0;
     jest.clearAllMocks();
   });
  
