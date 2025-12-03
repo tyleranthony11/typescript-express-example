@@ -1,4 +1,4 @@
-name: Lint & Build Project
+name: Lint Build & Test Project
 
 on:
   push:
@@ -29,3 +29,6 @@ jobs:
 
     - name: Build Project
       run: npm run build
+
+    - name: Test Project
+      run: npm run test
