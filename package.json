@@ -14,7 +14,8 @@
     "lint-fix": "eslint . --fix",
     "test": "jest",
     "int-test": "./integration-test.sh",
-    "win-int-test": "powershell -executionpolicy bypass -File .\\integration-test.ps1"
+    "win-int-test": "powershell -executionpolicy bypass -File .\\integration-test.ps1",
+    "dev": "ts-node src/index.ts"
   },
   "jest": {
     "preset": "ts-jest",
