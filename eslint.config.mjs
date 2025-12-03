@@ -26,15 +26,16 @@ export default [{
 
     languageOptions: {
         parser: tsParser,
+          globals: {
+        console: "readonly"
+      }
     },
+        
+
 
 
     rules: {
         "@typescript-eslint/no-explicit-any": "off",
     },
-   languageOptions: {
-      globals: {
-        console: "readonly"
-      }
-    }
+   
 }];
