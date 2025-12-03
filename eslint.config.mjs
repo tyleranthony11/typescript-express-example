@@ -28,10 +28,13 @@ export default [{
         parser: tsParser,
     },
 
+
     rules: {
         "@typescript-eslint/no-explicit-any": "off",
     },
+   languageOptions: {
       globals: {
-    console: "readonly"
-  },
+        console: "readonly"
+      }
+    }
 }];
