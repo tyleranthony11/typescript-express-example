@@ -1,5 +1,6 @@
 import { type RequestHandler } from "express";
 import Joi from "joi";
+import { pool } from "../db.js";
 
 export interface Book {
   isbn: string;
@@ -8,8 +9,6 @@ export interface Book {
   year: number;
   publisher: string;
 }
-
-const DEMO_BOOKS: Book[] = [];
 
 const BookSchema = Joi.object<Book>({
   isbn: Joi.string().required(),
@@ -26,38 +25,59 @@ const UpdateBookSchema = Joi.object({
   publisher: Joi.string().optional(),
 }).min(1);
 
-export const createBook: RequestHandler = (req, res) => {
+// CREATE
+export const createBook: RequestHandler = async (req, res) => {
   const { error, value } = BookSchema.validate(req.body);
   if (error) {
     res.status(400).json({ success: false, message: "Invalid book data" });
     return;
   }
 
-  const existing = DEMO_BOOKS.find((b) => b.isbn === value.isbn);
-  if (existing) {
-    res.status(400).json({
-      success: false,
-      message: "Book with this ISBN already exists",
-    });
-    return;
-  }
+  try {
+    const existing = await pool.query(
+      "SELECT * FROM books WHERE isbn = $1",
+      [value.isbn]
+    );
+    if (existing.rows.length > 0) {
+      res
+        .status(400)
+        .json({ success: false, message: "Book with this ISBN already exists" });
+      return;
+    }
 
-  DEMO_BOOKS.push(value);
-  res.status(200).json({ success: true, book: value });
+    const result = await pool.query(
+      "INSERT INTO books (isbn, title, author, year, publisher) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+      [value.isbn, value.title, value.author, value.year, value.publisher]
+    );
+
+    res.status(200).json({ success: true, book: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 };
 
-export const getBook: RequestHandler = (req, res) => {
+// READ
+export const getBook: RequestHandler = async (req, res) => {
   const { isbn } = req.params;
-  const book = DEMO_BOOKS.find((b) => b.isbn === isbn);
-  if (!book) {
-    res.status(404).json({ success: false, message: "Book not found" });
-    return;
+  try {
+    const result = await pool.query(
+      "SELECT * FROM books WHERE isbn = $1",
+      [isbn]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ success: false, message: "Book not found" });
+      return;
+    }
+    res.status(200).json({ success: true, book: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
   }
-
-  res.status(200).json({ success: true, book });
 };
 
-export const updateBook: RequestHandler = (req, res) => {
+// UPDATE
+export const updateBook: RequestHandler = async (req, res) => {
   const { isbn } = req.params;
   const { error, value } = UpdateBookSchema.validate(req.body);
   if (error) {
@@ -67,25 +87,48 @@ export const updateBook: RequestHandler = (req, res) => {
     return;
   }
 
-  const bookIndex = DEMO_BOOKS.findIndex((b) => b.isbn === isbn);
-  if (bookIndex === -1) {
-    res.status(404).json({ success: false, message: "Book not found" });
-    return;
-  }
+  try {
+    const existing = await pool.query(
+      "SELECT * FROM books WHERE isbn = $1",
+      [isbn]
+    );
+    if (existing.rows.length === 0) {
+      res.status(404).json({ success: false, message: "Book not found" });
+      return;
+    }
 
-  const updatedBook = { ...DEMO_BOOKS[bookIndex], ...value };
-  DEMO_BOOKS[bookIndex] = updatedBook;
-  res.status(200).json({ success: true, book: updatedBook });
+    const updatedBook = { ...existing.rows[0], ...value };
+
+    const result = await pool.query(
+      "UPDATE books SET title=$1, author=$2, year=$3, publisher=$4 WHERE isbn=$5 RETURNING *",
+      [updatedBook.title, updatedBook.author, updatedBook.year, updatedBook.publisher, isbn]
+    );
+
+    res.status(200).json({ success: true, book: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 };
 
-export const deleteBook: RequestHandler = (req, res) => {
+// DELETE
+export const deleteBook: RequestHandler = async (req, res) => {
   const { isbn } = req.params;
-  const bookIndex = DEMO_BOOKS.findIndex((b) => b.isbn === isbn);
-  if (bookIndex === -1) {
-    res.status(404).json({ success: false, message: "Book not found" });
-    return;
-  }
 
-  const deletedBook = DEMO_BOOKS.splice(bookIndex, 1)[0];
-  res.status(200).json({ success: true, book: deletedBook });
+  try {
+    const result = await pool.query(
+      "DELETE FROM books WHERE isbn=$1 RETURNING *",
+      [isbn]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ success: false, message: "Book not found" });
+      return;
+    }
+
+    res.status(200).json({ success: true, book: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 };
