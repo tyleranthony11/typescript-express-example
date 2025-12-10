@@ -1,6 +1,6 @@
 import { type RequestHandler } from "express";
 import Joi from "joi";
-import { pool } from "../db.js";
+import { pool } from "../db";
 
 export interface Book {
   isbn: string;
